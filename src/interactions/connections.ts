@@ -18,6 +18,7 @@ import {
     createConnection, 
     Connection 
   } from '../state';
+  import { log, error } from '../utils/logger';
   
   /**
    * Initializes the connection drawing system.
@@ -41,25 +42,69 @@ import {
    * Detects when user starts drawing a connection from a card dot.
    * Product Flow: User clicks on a dot → connection drawing begins
    */
-  function handlePossibleConnectionStart(event: PointerEvent) {
+  // src/interactions/connections.ts - in handlePossibleConnectionStart()
+function handlePossibleConnectionStart(event: PointerEvent) {
+    log('handlePossibleConnectionStart - Entry', {
+      target: event.target,
+      targetClass: (event.target as Element)?.className,
+      eventType: event.type,
+      timestamp: Date.now()
+    });
+    
     const dot = (event.target as Element).closest('.connection-dot');
     
-    if (!dot) return; // Not clicking a connection dot
+    log('Connection dot detection', {
+      dotElement: !!dot,
+      dotClass: dot?.className,
+      dotAttributes: dot ? Object.fromEntries([...dot.attributes].map(a => [a.name, a.value])) : null
+    });
+    
+    if (!dot) {
+      log('handlePossibleConnectionStart - Early exit: No dot found', { 
+        target: event.target 
+      });
+      return;
+    }
     
     const cardId = parseInt(dot.getAttribute('data-card-id') || '', 10);
     const side = parseInt(dot.getAttribute('data-side') || '', 10);
     
-    if (isNaN(cardId) || isNaN(side)) return;
+    log('Connection data extracted', {
+      cardId: cardId,
+      side: side,
+      isValid: !isNaN(cardId) && !isNaN(side)
+    });
     
-    // Start tracking a pending connection
-    $pendingConnection.set({
+    if (isNaN(cardId) || isNaN(side)) {
+      error('handlePossibleConnectionStart - Invalid connection data', { 
+        cardId, 
+        side,
+        dotAttributes: [...dot.attributes].map(a => `${a.name}="${a.value}"`)
+      });
+      return;
+    }
+    
+    const pendingState = {
       fromCardId: cardId,
       fromSide: side,
       currentX: event.clientX,
       currentY: event.clientY
+    };
+    
+    log('Setting pending connection state', {
+      oldState: $pendingConnection.get(),
+      newState: pendingState
+    });
+    
+    $pendingConnection.set(pendingState);
+    
+    log('Pending connection state set', {
+      currentValue: $pendingConnection.get(),
+      stateMatches: JSON.stringify($pendingConnection.get()) === JSON.stringify(pendingState)
     });
     
     event.preventDefault();
+    log('Event prevented');
   }
   
   /**
