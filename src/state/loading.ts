@@ -1,42 +1,31 @@
-/**
- * INITIAL SCENARIO LOADING LOGIC
- * 
- * This module handles creating the initial set of scenario cards when the
- * application first starts or when users reset the workspace.
- * 
- * Product Purpose: Provides a clean starting point with all available scenarios
- * arranged in an organized grid pattern.
- */
-
+// src/state/loading.ts
+import { log } from '../utils/logger';
 import { CardLayout } from './index';
 import { $allCards } from './index';
 
-/**
- * Loads the default set of scenario cards into the workspace.
- * Product Context: Provides initial content for new users or after reset.
- * 
- * Layout Details:
- * - 6 scenarios (1-6) arranged in a 3-column grid
- * - Each card is sized 350x250 pixels
- * - Cards are spaced 24 pixels apart
- * - Grid starts 20 pixels from left, 80 pixels from top (allowing for header)
- */
 export function loadDefaultCards(): void {
-  // Create cards for scenarios 1-6
+  log('loadDefaultCards called');
+  
   const defaultCards: CardLayout[] = [1, 2, 3, 4, 5, 6].map((id, index) => {
+    log(`Creating card ${id}, index ${index}`);
     const cols = 3;
     const col = index % cols;
     const row = Math.floor(index / cols);
     
-    return {
+    const card = {
       id,
-      x: 20 + col * 374,  // 350px width + 24px gap
-      y: 80 + row * 274,  // 250px height + 24px gap
+      x: 20 + col * 374,
+      y: 80 + row * 274,
       width: 350,
       height: 250,
       zIndex: 1
     };
+    
+    log(`Card ${id} positioned at`, { x: card.x, y: card.y });
+    return card;
   });
   
+  log('Setting default cards in store', { count: defaultCards.length });
   $allCards.set(defaultCards);
+  log('Default cards loaded successfully');
 }

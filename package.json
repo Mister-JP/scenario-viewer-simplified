@@ -5,7 +5,8 @@
     "main": "src/index.ts",
     "type": "module",
     "scripts": {
-      "dev": "vite",
+      "dev": "DEBUG=* NODE_OPTIONS='--trace-warnings' vite",
+      "dev:verbose": "DEBUG=* NODE_OPTIONS='--trace-warnings --trace-sync-io' vite --debug",
       "build": "tsc && vite build",
       "preview": "vite preview",
       "lint": "eslint src/**/*.ts"

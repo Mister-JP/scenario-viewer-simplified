@@ -1,19 +1,5 @@
-/**
- * SCENARIO VIEWER APPLICATION INITIALIZER
- * 
- * This is the entry point for our "Scenario Viewer" product - an interactive tool 
- * that helps teams visualize and connect different scenario views through a 
- * drag-and-drop interface. Think of it as a digital whiteboard where each card 
- * represents a scenario that can be moved and connected to show relationships.
- * 
- * Product Features Orchestrated Here:
- * - Card-based scenario display with iframe previews
- * - Drag-and-drop repositioning of scenario cards
- * - Visual connection lines between related scenarios
- * - Save/load layouts for team collaboration
- * - Host URL management for content source
- */
-
+// src/index.ts
+import { log, error } from './utils/logger';
 import { html, render } from 'lit-html';
 import { mount } from 'motion';
 import { renderApp } from './templates/app';
@@ -23,52 +9,69 @@ import { initializeLayoutPersistence } from './interactions/layout';
 import { loadDefaultCards } from './state/loading';
 import { atom } from 'nanostores';
 
+log('Script execution started');
+
 // Create a dirty flag to track state changes
 const $isDirty = atom<boolean>(false);
+log('Dirty flag atom created');
 
 // Track all state atoms for change detection
 const stateAtoms = new Set<any>();
+log('State atoms set initialized');
 
 // Initialize the application when DOM is ready
+log('Adding DOMContentLoaded listener');
 document.addEventListener('DOMContentLoaded', () => {
+  log('DOM Content Loaded');
   const appRoot = document.getElementById('workspace');
+  
+  log('Looking for workspace element');
   if (!appRoot) {
+    error('Cannot initialize: workspace element not found');
+    // Let's check what's in the document
+    log('Document body content preview:', document.body.innerHTML.slice(0, 200));
     throw new Error('Cannot initialize: workspace element not found');
   }
+  log('Found workspace element', { id: appRoot.id, className: appRoot.className });
 
-  // Subscribe to state changes
+  log('Subscribing to state changes');
   subscribeToStateChanges();
   
-  // Set up layout persistence first
+  log('Initializing layout persistence');
   initializeLayoutPersistence();
   
-  // Load default cards before rendering
+  log('Loading default cards');
   loadDefaultCards();
   
-  // Initial render
+  log('Performing initial render');
   render(renderApp(), appRoot);
   
   // Set up interactions AFTER initial render
+  log('Scheduling interaction setup after render');
   requestAnimationFrame(() => {
+    log('Setting up drag and drop');
     setupDragAndDrop();
+    log('Setting up connection system');
     setupConnectionSystem();
+    log('All interactions set up');
   });
   
-  // Start render loop
+  log('Starting render loop');
   runRenderLoop();
 });
 
-/**
- * Renders the app only when state has changed
- * Product Impact: Optimizes performance by only updating UI when necessary
- */
 function runRenderLoop() {
+  log('Render loop initialized');
   function renderLoop() {
     if ($isDirty.get()) {
+      log('Dirty flag set, re-rendering');
       const appRoot = document.getElementById('workspace');
       if (appRoot) {
         render(renderApp(), appRoot);
+        log('Re-render complete');
         $isDirty.set(false);
+      } else {
+        error('Lost workspace element during render loop');
       }
     }
     requestAnimationFrame(renderLoop);
@@ -77,24 +80,33 @@ function runRenderLoop() {
   requestAnimationFrame(renderLoop);
 }
 
-/**
- * Sets up subscriptions to all state atoms to mark dirty when changed
- * Product Purpose: Ensures UI always reflects latest user changes
- */
 function subscribeToStateChanges() {
+  log('Starting state change subscriptions');
   import('./state').then(state => {
+    log('State module imported successfully');
     const { $allCards, $allConnections, $activeDraggedCard, $pendingConnection, $hostUrl } = state;
     
-    // Add all state atoms to tracking set
+    log('Subscribing to state atoms');
     [
       $allCards,
       $allConnections, 
       $activeDraggedCard,
       $pendingConnection,
       $hostUrl
-    ].forEach(atom => {
+    ].forEach((atom, index) => {
+      const name = ['$allCards', '$allConnections', '$activeDraggedCard', '$pendingConnection', '$hostUrl'][index];
       stateAtoms.add(atom);
-      atom.subscribe(() => $isDirty.set(true));
+      atom.subscribe(() => {
+        log(`State change detected in ${name}`);
+        $isDirty.set(true);
+      });
+      log(`Subscribed to ${name}`);
     });
+    
+    log('All state subscriptions complete');
+  }).catch(err => {
+    error('Failed to import state module', err);
   });
 }
+
+log('End of index.ts file execution');

@@ -6,8 +6,21 @@
   <title>Scenario Viewer - Interactive Scenario Visualization Tool</title>
   <meta name="description" content="Organize and connect different scenario views in an interactive workspace">
   <link rel="stylesheet" href="./public/styles.css">
+  <script>
+    console.log('%c[HTML] Document head loaded', 'color: blue; font-weight: bold');
+    window.addEventListener('load', () => {
+      console.log('%c[HTML] Window load event fired', 'color: green; font-weight: bold');
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('%c[HTML] DOMContentLoaded event fired', 'color: green; font-weight: bold');
+    });
+  </script>
 </head>
 <body>
+  <script>
+    console.log('%c[HTML] Body execution started', 'color: blue; font-weight: bold');
+  </script>
+  
   <!-- Main application will be rendered here by TypeScript -->
   <div id="workspace" class="workspace"></div>
   
@@ -19,5 +32,8 @@
   </div>
   
   <script type="module" src="./dist/index.js"></script>
+  <script>
+    console.log('%c[HTML] Module script tag added', 'color: blue; font-weight: bold');
+  </script>
 </body>
 </html>
