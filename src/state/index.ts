@@ -10,6 +10,8 @@
  */
 
 import { atom } from 'nanostores';
+import { log } from '../utils/logger';
+
 
 /**
  * Represents the position and size of a scenario card on the workspace.
@@ -101,12 +103,16 @@ export const $hostUrl = atom<string>(
  * Product Flow: User clicks and drags a card → we update its position → UI refreshes
  */
 export function updateCardPosition(cardId: number, x: number, y: number): void {
-  const cards = $allCards.get();
-  const updatedCards = cards.map(card => 
-    card.id === cardId ? { ...card, x, y } : card
-  );
-  $allCards.set(updatedCards);
-}
+    log('Update card position', { cardId, x, y });
+    
+    const cards = $allCards.get();
+    const updatedCards = cards.map(card => 
+      card.id === cardId ? { ...card, x, y } : card
+    );
+    
+    $allCards.set(updatedCards);
+    log('Card position updated', { cardId, newPosition: { x, y } });
+  }
 
 /**
  * Brings a card to the front when selected (prevents it from being hidden).
@@ -126,13 +132,17 @@ export function bringCardToFront(cardId: number): void {
  * Product Flow: User drags from one card to another → connection is created → relationship is visualized
  */
 export function createConnection(connection: Omit<Connection, 'id'>): void {
-  const connections = $allConnections.get();
-  const newConnection: Connection = {
-    ...connection,
-    id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  };
-  $allConnections.set([...connections, newConnection]);
-}
+    log('Creating connection', connection);
+    
+    const connections = $allConnections.get();
+    const newConnection: Connection = {
+      ...connection,
+      id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    };
+    
+    $allConnections.set([...connections, newConnection]);
+    log('Connection created', { connectionId: newConnection.id });
+  }
 
 /**
  * Removes a specific connection.

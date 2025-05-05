@@ -14,6 +14,7 @@
 
 import { CardLayout, Connection } from '../state';
 import { $allCards, $allConnections, updateCardPosition, createConnection } from '../state';
+import { log, error } from '../utils/logger';
 
 /**
  * Interface for saved layout data.
@@ -33,8 +34,15 @@ interface SavedLayout {
  * Product Use Case: Teams can share arrangements or save complex setups.
  */
 export function saveLayoutToFile() {
-  const cards = $allCards.get();
-  const connections = $allConnections.get();
+   log('Save layout initiated');
+
+   const cards = $allCards.get();
+   const connections = $allConnections.get();
+
+   log('Saving layout data', { 
+       cardCount: cards.length,
+       connectionCount: connections.length 
+   });
   
   // Strip IDs from connections to avoid conflicts on load
   const connectionsForSave = connections.map(({ id, ...rest }) => rest);
@@ -58,6 +66,9 @@ export function saveLayoutToFile() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+
+  log('Layout saved successfully', { filename: link.download });
+
 }
 
 /**
@@ -112,11 +123,16 @@ export function loadLayoutFromFile(file: File) {
  * Product Purpose: Quick way to organize workspace from scratch.
  */
 export function resetLayout() {
+  log('Reset layout initiated');
+
   // Clear connections
   $allConnections.set([]);
+  log('Connections cleared');
+
   
   // Arrange cards in grid pattern
   const cards = $allCards.get();
+  log('Resetting positions for cards', { cardCount: cards.length });
   const cols = 3;
   const cardWidth = 350;
   const cardHeight = 250;
@@ -139,6 +155,8 @@ export function resetLayout() {
   });
   
   $allCards.set(updatedCards);
+  log('Layout reset complete', { cardsPositioned: updatedCards.length });
+
 }
 
 /**

@@ -12,6 +12,7 @@
 
 import { html } from 'lit-html';
 import { $hostUrl } from '../state';
+import { log } from '../utils/logger';
 
 /**
  * Renders the application header with all control buttons.
@@ -77,21 +78,28 @@ export function renderHeader() {
 // Header control handlers - these functions trigger actions when buttons are clicked
 
 function editHostUrl() {
-  const currentUrl = $hostUrl.get();
-  const newUrl = prompt('Enter the URL where scenario content is hosted:', currentUrl);
+    log('Edit host URL clicked');
+    const currentUrl = $hostUrl.get();
+    const newUrl = prompt('Enter the URL where scenario content is hosted:', currentUrl);
+    
+    if (newUrl && newUrl !== currentUrl) {
+      log('Host URL changing', { from: currentUrl, to: newUrl });
+      import('../state').then(({ updateHostUrl }) => {
+        updateHostUrl(newUrl);
+      });
+    } else {
+      log('Host URL edit cancelled');
+    }
+  }
   
-  if (newUrl && newUrl !== currentUrl) {
-    import('../state').then(({ updateHostUrl }) => {
-      updateHostUrl(newUrl);
+
+  function resetToDefaultLayout() {
+    log('Reset layout button clicked');
+    import('../interactions/layout').then(({ resetLayout }) => {
+      resetLayout();
     });
   }
-}
-
-function resetToDefaultLayout() {
-  import('../interactions/layout').then(({ resetLayout }) => {
-    resetLayout();
-  });
-}
+  
 
 function triggerLoadLayout() {
   document.getElementById('layout-file-input')?.click();

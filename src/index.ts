@@ -1,13 +1,22 @@
 // src/index.ts
 import { log, error } from './utils/logger';
 import { html, render } from 'lit-html';
-import { mount } from 'motion';
 import { renderApp } from './templates/app';
 import { setupDragAndDrop } from './interactions/card-drag';
 import { setupConnectionSystem } from './interactions/connections';
 import { initializeLayoutPersistence } from './interactions/layout';
 import { loadDefaultCards } from './state/loading';
 import { atom } from 'nanostores';
+
+
+console.log('%c=== Application Starting ===', 'background: blue; color: white; padding: 5px');
+console.table({
+  'Timestamp': new Date().toISOString(),
+  'Window Loaded': document.readyState,
+  'Logger Available': typeof log,
+  'Atoms Available': typeof atom
+});
+
 
 log('Script execution started');
 

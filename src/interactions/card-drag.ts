@@ -13,18 +13,26 @@
  */
 
 import { $allCards, $activeDraggedCard, updateCardPosition, bringCardToFront } from '../state';
+import { log, error } from '../utils/logger';
+
 
 /**
  * Initializes the drag-and-drop system for all scenario cards.
  * Product Purpose: Makes cards moveable so teams can organize their workspace.
  */
 export function setupDragAndDrop() {
-  // Use event delegation for performance
-  const workspace = document.getElementById('workspace');
-  if (!workspace) return;
+    log('Setting up drag and drop system');
+    
+    const workspace = document.getElementById('workspace');
+    if (!workspace) {
+      error('Cannot setup drag and drop: workspace element not found');
+      return;
+    }
+    
+    log('Workspace found', { id: workspace.id });
+    workspace.addEventListener('pointerdown', handleWorkspaceClick);
+  }
   
-  workspace.addEventListener('pointerdown', handleWorkspaceClick);
-}
 
 /**
  * Handles clicks on the workspace to initialize card dragging.
@@ -32,15 +40,23 @@ export function setupDragAndDrop() {
  */
 function handleWorkspaceClick(event: PointerEvent) {
   const handle = (event.target as Element).closest('[data-drag-handle]');
+  log('Workspace click event', { hasHandle: !!handle });
   
-  if (!handle) return; // Not clicking a drag handle
+  if (!handle) return;
   
   const card = handle.closest('.card') as HTMLElement;
-  if (!card) return;
+  if (!card) {
+    error('No card element found for handle');
+    return;
+  }
   
   const cardId = parseInt(card.dataset.cardId || '', 10);
-  if (isNaN(cardId)) return;
+  if (isNaN(cardId)) {
+    error('Invalid card ID', { cardId: card.dataset.cardId });
+    return;
+  }
   
+  log('Card drag initiated', { cardId });
   startDraggingCard(card, cardId, event);
 }
 
@@ -49,40 +65,46 @@ function handleWorkspaceClick(event: PointerEvent) {
  * Product Flow: User grabs handle → card becomes moveable → follows cursor
  */
 function startDraggingCard(element: HTMLElement, cardId: number, event: PointerEvent) {
-  // Mark this card as actively being dragged
-  $activeDraggedCard.set(cardId);
-  
-  // Bring card to front so it's always visible during drag
-  bringCardToFront(cardId);
-  
-  // Store initial positions
-  const startX = event.clientX;
-  const startY = event.clientY;
-  const cards = $allCards.get();
-  const cardData = cards.find(c => c.id === cardId);
-  
-  if (!cardData) return;
-  
-  const initialX = cardData.x;
-  const initialY = cardData.y;
-  
-  // Track mouse movement
-  function handleMove(moveEvent: PointerEvent) {
-    const deltaX = moveEvent.clientX - startX;
-    const deltaY = moveEvent.clientY - startY;
+    log('Card drag started', { cardId, x: event.clientX, y: event.clientY });
     
-    updateCardPosition(cardId, initialX + deltaX, initialY + deltaY);
-  }
-  
-  // Stop dragging when mouse released
-  function handleRelease() {
-    document.removeEventListener('pointermove', handleMove);
-    document.removeEventListener('pointerup', handleRelease);
+    $activeDraggedCard.set(cardId);
+    bringCardToFront(cardId);
     
-    // Clear active drag state
-    $activeDraggedCard.set(null);
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const cards = $allCards.get();
+    const cardData = cards.find(c => c.id === cardId);
+    
+    if (!cardData) {
+      error('Card data not found', { cardId });
+      return;
+    }
+    
+    log('Card initial position', { cardId, x: cardData.x, y: cardData.y });
+    
+    const initialX = cardData.x;
+    const initialY = cardData.y;
+    
+    function handleMove(moveEvent: PointerEvent) {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = moveEvent.clientY - startY;
+      const newX = initialX + deltaX;
+      const newY = initialY + deltaY;
+      
+      log('Card position update', { cardId, x: newX, y: newY, deltaX, deltaY });
+      updateCardPosition(cardId, newX, newY);
+    }
+    
+    function handleRelease() {
+      const finalPosition = cards.find(c => c.id === cardId);
+      log('Card drag ended', { 
+        cardId, 
+        finalPosition: finalPosition ? { x: finalPosition.x, y: finalPosition.y } : null 
+      });
+      
+      document.removeEventListener('pointermove', handleMove);
+      document.removeEventListener('pointerup', handleRelease);
+      
+      $activeDraggedCard.set(null);
+    }
   }
-  
-  document.addEventListener('pointermove', handleMove);
-  document.addEventListener('pointerup', handleRelease);
-}
