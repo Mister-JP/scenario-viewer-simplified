@@ -6,202 +6,291 @@
 
 /* Global Layout Foundation */
 :root {
-    --primary-blue: #4361ee;
-    --secondary-blue: #4cc9f0;
-    --success-green: #06d6a0;
-    --warning-yellow: #ffd166;
-    --error-red: #ef476f;
-    --dark-gray: #212529;
-    --light-gray: #f8f9fa;
-    --medium-gray: #adb5bd;
-    --text-dark: #495057;
-    
-    --card-width: 350px;
-    --card-height: 250px;
-    --grid-gap: 24px;
-    --connection-color: #444;
-    --connection-width: 2px;
-  }
+  --primary-blue: #4361ee;
+  --secondary-blue: #4cc9f0;
+  --success-green: #06d6a0;
+  --warning-yellow: #ffd166;
+  --error-red: #ef476f;
+  --dark-gray: #212529;
+  --light-gray: #f8f9fa;
+  --medium-gray: #adb5bd;
+  --text-dark: #495057;
   
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-    background: #f0f2f5;
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    overflow: hidden;
-  }
-  
-  /* Application Header and Controls */
-  .app-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(to right, var(--primary-blue), var(--secondary-blue));
-    color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-    z-index: 100;
-    position: relative;
-  }
-  
-  .host-container {
-    display: flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 0.35rem 0.75rem;
-    border-radius: 4px;
-    margin-right: auto;
-  }
-  
-  .layout-controls {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  /* Scenario Card Presentation */
-  .card {
-    border-radius: 8px;
-    overflow: hidden;
-    background: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-    transition: box-shadow 0.15s ease;
-    border: 1px solid #e9ecef;
-    position: absolute;
-  }
-  
-  .card:hover {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  }
-  
-  .card-header {
-    padding: 0.6rem 0.8rem;
-    border-bottom: 1px solid #e9ecef;
-    background: linear-gradient(to right, #f8f9fa, #ffffff);
-    display: flex;
-    align-items: center;
-  }
-  
-  .drag-handle {
-    width: 18px;
-    height: 18px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='5' cy='5' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='10' cy='5' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='15' cy='5' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='5' cy='10' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='10' cy='10' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='15' cy='10' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='5' cy='15' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='10' cy='15' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='15' cy='15' r='2' fill='%23adb5bd'/%3E%3C/svg%3E");
-    cursor: move;
-    opacity: 0.6;
-    transition: opacity 0.15s ease;
-  }
-  
-  .card:hover .drag-handle {
-    opacity: 1;
-  }
-  
-  .card-content {
-    height: calc(100% - 41px);
-    overflow: hidden;
-  }
-  
-  .card iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-  
-  /* Connection System Visualization */
-  .connection-points {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-  
-  .connection-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--warning-yellow);
-    position: absolute;
-    box-shadow: 0 0 0 2px white;
-    pointer-events: auto;
-    cursor: crosshair;
-    opacity: 0;
-    transition: opacity 0.25s ease, background-color 0.15s ease, transform 0.15s ease;
-    z-index: 50;
-  }
-  
-  .card:hover .connection-dot {
-    opacity: 0.8;
-  }
-  
-  .connection-dot:hover {
-    background: var(--secondary-blue);
-    transform: translate(-50%, -50%) scale(1.3);
-  }
-  
-  .connection-line {
-    stroke: var(--connection-color);
-    stroke-width: var(--connection-width);
-    fill: none;
-    cursor: pointer;
-    transition: stroke-width 0.15s ease;
-  }
-  
-  .connection-line:hover {
-    stroke-width: 4px;
-  }
-  
-  /* Workspace Organization */
-  .workspace-content {
-    position: relative;
-    width: 100%;
-    height: calc(100vh - 56px);
-    background-image: 
-      linear-gradient(rgba(130, 130, 130, 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(130, 130, 130, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
-    overflow: auto;
-  }
-  
-  /* Interaction States */
-  .card.dragging {
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-    cursor: move;
-  }
-  
-  .card.other-dragging {
-    opacity: 0.7;
-  }
-  
-  /* Button and Control Styling */
-  button {
-    padding: 0.4rem 0.9rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.15s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-  
-  .app-header button {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-  }
-  
-  .app-header button:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-  
-  .edit-host-btn {
-    background: rgba(255, 255, 255, 0.1);
-    margin-left: 0.5rem;
-  }
-  
-  .save-layout-btn {
-    background: rgba(255, 255, 255, 0.25);
-  }
-  
-  .reset-layout-btn {
-    background: rgba(255, 255, 255, 0.1);
-  }
+  --card-width: 350px;
+  --card-height: 250px;
+  --grid-gap: 24px;
+  --connection-color: #444;
+  --connection-width: 2px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  background: #f0f2f5;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden; /* Prevents scrollbars from body if content overflows slightly */
+  position: relative; /* For positioning fixed elements if needed */
+}
+
+/* Application Header and Controls */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(to right, var(--primary-blue), var(--secondary-blue));
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  z-index: 100; /* High z-index to stay on top */
+  position: relative; /* Establishes stacking context */
+}
+
+.app-header h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.host-container {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  margin-left: 1rem; /* Added margin from title */
+  margin-right: auto; /* Pushes layout-controls to the right */
+  font-size: 0.9rem;
+}
+
+.host-label {
+  margin-right: 0.5em;
+  opacity: 0.8;
+}
+
+.host-value {
+  font-weight: 500;
+}
+
+.layout-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Scenario Card Presentation */
+.card {
+  border-radius: 8px;
+  overflow: hidden; /* Content like iframe should not spill out */
+  background: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.15s ease, opacity 0.2s ease; /* Added opacity transition */
+  border: 1px solid #e9ecef;
+  position: absolute; /* Crucial for x, y positioning */
+  display: flex; /* Flex column for header and content */
+  flex-direction: column;
+}
+
+.card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #e9ecef;
+  background: linear-gradient(to right, #f8f9fa, #ffffff);
+  display: flex;
+  align-items: center;
+  user-select: none; /* Prevent text selection in header */
+}
+
+.card-header h2 {
+  font-size: 1rem;
+  margin: 0;
+  margin-left: 0.5rem; /* Space from handle */
+  color: var(--text-dark);
+  flex-grow: 1; /* Take available space */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drag-handle {
+  width: 18px;
+  height: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='5' cy='5' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='10' cy='5' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='15' cy='5' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='5' cy='10' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='10' cy='10' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='15' cy='10' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='5' cy='15' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='10' cy='15' r='2' fill='%23adb5bd'/%3E%3Ccircle cx='15' cy='15' r='2' fill='%23adb5bd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: move;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.card:hover .drag-handle {
+  opacity: 1;
+}
+
+.card-content {
+  /* height: calc(100% - 41px); */ /* This calculation can be tricky with flexbox */
+  flex-grow: 1; /* Allows content to fill remaining space */
+  overflow: hidden; /* If iframe content is too large */
+  border: none; /* Ensure no internal borders */
+}
+
+.card iframe {
+  width: 100%;
+  height: 100%;
+  border: none; /* Important for seamless look */
+  display: block; /* Removes potential extra space below iframe */
+}
+
+/* Connection System Visualization */
+.connection-points { /* This is a container for dots, usually transparent */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Allows clicks to pass through to card, dots override this */
+}
+
+.connection-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--warning-yellow);
+  position: absolute; /* Positioned relative to card */
+  box-shadow: 0 0 0 2px white; /* Creates a border effect */
+  pointer-events: auto; /* Makes dots clickable */
+  cursor: crosshair;
+  opacity: 0; /* Hidden by default, shown on card hover */
+  transition: opacity 0.25s ease, background-color 0.15s ease, transform 0.15s ease;
+  z-index: 50; /* Above card content, below header if header needs higher z-index */
+}
+
+.card:hover .connection-dot,
+.card.dragging .connection-dot, /* Show dots if card is being dragged */
+.card.other-dragging .connection-dot { /* Show dots if another card is being dragged */
+  opacity: 0.8;
+}
+
+.connection-dot:hover {
+  background: var(--secondary-blue);
+  transform: translate(-50%, -50%) scale(1.3); /* Requires original transform to be set */
+  opacity: 1;
+}
+
+.connection-line {
+  stroke: var(--connection-color);
+  stroke-width: var(--connection-width);
+  fill: none;
+  cursor: pointer; /* For double-click removal */
+  transition: stroke-width 0.15s ease;
+}
+
+.connection-line:hover {
+  stroke-width: calc(var(--connection-width) + 2px); /* Slightly thicker on hover */
+}
+
+.connection-line.pending { /* Style for the line being dragged */
+  stroke: var(--medium-gray);
+  stroke-dasharray: 4, 4; /* Dashed line for pending state */
+  stroke-width: var(--connection-width);
+}
+
+/* Workspace Organization */
+.workspace-content { /* The area where cards are placed */
+  position: relative; /* Establishes coordinate system for absolute positioned cards */
+  width: 100%;
+  height: calc(100vh - 56px); /* Adjust 56px if header height changes */
+  background-image: 
+    linear-gradient(rgba(130, 130, 130, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(130, 130, 130, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  overflow: auto; /* If content exceeds viewport, allow scrollbars on this container */
+}
+
+/* Interaction States */
+.card.dragging {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25); /* More prominent shadow */
+  cursor: grabbing; /* Indicate active grab */
+  /* z-index will be handled by JS to bring to front */
+}
+
+.card.other-dragging { /* When another card is being dragged */
+  opacity: 0.7; /* Dim cards not being actively dragged */
+}
+
+/* Button and Control Styling */
+button, .button { /* Generic button style */
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.app-header button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.app-header button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.edit-host-btn {
+  /* background: rgba(255, 255, 255, 0.1); */ /* Already covered by .app-header button */
+  margin-left: 0.5rem;
+}
+
+/* Specific button styling if needed */
+.save-layout-btn {
+  /* background: rgba(255, 255, 255, 0.25); */
+}
+
+.reset-layout-btn {
+  /* background: rgba(255, 255, 255, 0.1); */
+}
+
+/* Hidden file input styling for accessibility (though it's display:none) */
+#layout-file-input {
+  border: 0;
+  clip: rect(0,0,0,0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  white-space: nowrap;
+}
+
+.connection-line {
+  stroke: var(--connection-color);
+  stroke-width: var(--connection-width);
+  fill: none;
+  cursor: pointer; 
+  transition: stroke-width 0.15s ease;
+  /* Allow pointer events for interaction (like double-click) */
+  pointer-events: auto; 
+}
+
+.connection-line:hover {
+  stroke-width: calc(var(--connection-width) + 3px); /* Make hover more prominent */
+  stroke: var(--primary-blue); /* Change color on hover */
+}
+
+.connection-line.pending {
+  stroke: var(--primary-blue); /* Make it a distinct color */
+  stroke-opacity: 0.7;
+  stroke-dasharray: 6, 3; 
+  stroke-width: calc(var(--connection-width) + 1px); /* Slightly thicker */
+  pointer-events: none; /* The pending line itself should not be interactive */
+}

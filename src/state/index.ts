@@ -10,7 +10,7 @@
  */
 
 import { atom } from 'nanostores';
-import { log } from '../utils/logger';
+import { log, error } from '../utils/logger'; // Added error
 
 
 /**
@@ -80,8 +80,10 @@ export const $activeDraggedCard = atom<number | null>(null);
 export const $pendingConnection = atom<{
   fromCardId: number;
   fromSide: number;
-  currentX: number;
-  currentY: number;
+  startX: number; // Added for potential calculations relative to SVG/workspace start
+  startY: number; // Added for potential calculations
+  currentX: number; // Mouse position relative to viewport
+  currentY: number; // Mouse position relative to viewport
 } | null>(null);
 
 /**
@@ -103,15 +105,17 @@ export const $hostUrl = atom<string>(
  * Product Flow: User clicks and drags a card → we update its position → UI refreshes
  */
 export function updateCardPosition(cardId: number, x: number, y: number): void {
-    log('Update card position', { cardId, x, y });
+    // log('Update card position action', { cardId, x, y }); // Can be verbose
     
-    const cards = $allCards.get();
-    const updatedCards = cards.map(card => 
+    const currentCards = $allCards.get();
+    const updatedCards = currentCards.map(card => 
       card.id === cardId ? { ...card, x, y } : card
     );
     
-    $allCards.set(updatedCards);
-    log('Card position updated', { cardId, newPosition: { x, y } });
+    if (JSON.stringify(currentCards) !== JSON.stringify(updatedCards)) {
+        $allCards.set(updatedCards);
+        // log('Card position updated in store', { cardId, newPosition: { x, y } }); // Can be verbose
+    }
   }
 
 /**
@@ -120,28 +124,49 @@ export function updateCardPosition(cardId: number, x: number, y: number): void {
  */
 export function bringCardToFront(cardId: number): void {
   const cards = $allCards.get();
-  const maxZIndex = Math.max(...cards.map(c => c.zIndex), 0);
-  const updatedCards = cards.map(card => 
-    card.id === cardId ? { ...card, zIndex: maxZIndex + 1 } : card
-  );
-  $allCards.set(updatedCards);
+  if (cards.length === 0) { // Handle empty case
+    log('bringCardToFront: No cards to bring to front.');
+    return;
+  }
+  const maxZIndex = Math.max(...cards.map(c => c.zIndex), 0); // Default to 0 if no cards or all zIndex are < 0
+  
+  const cardToUpdate = cards.find(c => c.id === cardId);
+  if (cardToUpdate && cardToUpdate.zIndex <= maxZIndex) { // Only update if not already on top
+    const updatedCards = cards.map(card => 
+        card.id === cardId ? { ...card, zIndex: maxZIndex + 1 } : card
+    );
+    $allCards.set(updatedCards);
+    log('Card brought to front', { cardId, newZIndex: maxZIndex + 1 });
+  } else if (!cardToUpdate) {
+    error('bringCardToFront: Card not found', { cardId });
+  }
 }
 
 /**
  * Creates a new connection between two cards.
  * Product Flow: User drags from one card to another → connection is created → relationship is visualized
  */
-export function createConnection(connection: Omit<Connection, 'id'>): void {
-    log('Creating connection', connection);
+export function createConnection(connectionData: Omit<Connection, 'id'>): void {
+    log('Creating connection action', connectionData);
     
-    const connections = $allConnections.get();
+    const currentConnections = $allConnections.get();
+    // Prevent duplicate connections (optional, based on product needs)
+    const existing = currentConnections.find(c =>
+        c.fromCardId === connectionData.fromCardId && c.toCardId === connectionData.toCardId &&
+        c.fromSide === connectionData.fromSide && c.toSide === connectionData.toSide
+    );
+    if (existing) {
+        log('Connection already exists, not creating duplicate.', { connectionData });
+        return;
+    }
+
     const newConnection: Connection = {
-      ...connection,
-      id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      ...connectionData,
+      id: `conn-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
     };
     
-    $allConnections.set([...connections, newConnection]);
-    log('Connection created', { connectionId: newConnection.id });
+    $allConnections.set([...currentConnections, newConnection]);
+    log('Connection created in store', { connectionId: newConnection.id });
   }
 
 /**
@@ -149,8 +174,16 @@ export function createConnection(connection: Omit<Connection, 'id'>): void {
  * Product Flow: User deletes a connection → relationship visualization is removed
  */
 export function removeConnection(connectionId: string): void {
-  const connections = $allConnections.get();
-  $allConnections.set(connections.filter(c => c.id !== connectionId));
+  log('Removing connection action', { connectionId });
+  const currentConnections = $allConnections.get();
+  const updatedConnections = currentConnections.filter(c => c.id !== connectionId);
+  
+  if (currentConnections.length !== updatedConnections.length) {
+    $allConnections.set(updatedConnections);
+    log('Connection removed from store', { connectionId });
+  } else {
+    log('Connection to remove not found in store', { connectionId });
+  }
 }
 
 /**
@@ -159,7 +192,19 @@ export function removeConnection(connectionId: string): void {
  * useful for switching environments or demos.
  */
 export function updateHostUrl(newUrl: string): void {
-  const cleanUrl = newUrl.trim().replace(/\/$/, '');
+  const trimmedUrl = newUrl.trim();
+  if (!trimmedUrl) {
+    error('updateHostUrl: New URL is empty, not updating.');
+    return;
+  }
+  const cleanUrl = trimmedUrl.replace(/\/$/, ''); // Remove trailing slash
+  
+  log('Updating host URL action', { oldUrl: $hostUrl.get(), newUrl: cleanUrl });
   $hostUrl.set(cleanUrl);
-  localStorage.setItem('scenario-host', cleanUrl);
+  try {
+    localStorage.setItem('scenario-host', cleanUrl);
+    log('Host URL saved to localStorage.');
+  } catch (e) {
+    error('Failed to save host URL to localStorage', e);
+  }
 }

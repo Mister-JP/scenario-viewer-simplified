@@ -1,3 +1,4 @@
+// src/interactions/connections.ts
 /**
  * CONNECTION DRAWING INTERACTIONS
  * 
@@ -13,147 +14,160 @@
  */
 
 import { 
-    $pendingConnection, 
-    $allConnections, 
-    createConnection, 
-    Connection 
-  } from '../state';
-  import { log, error } from '../utils/logger';
-  
-  /**
-   * Initializes the connection drawing system.
-   * Product Purpose: Enables teams to visually link related scenarios.
-   */
-  export function setupConnectionSystem() {
-    const workspace = document.getElementById('workspace');
-    if (!workspace) return;
-    
-    // Listen for connection initiation (clicking on dots)
-    workspace.addEventListener('pointerdown', handlePossibleConnectionStart);
-    
-    // Track mouse movement during connection drawing
-    document.addEventListener('pointermove', handleConnectionDragMove);
-    
-    // Finalize or cancel connection drawing
-    document.addEventListener('pointerup', handleConnectionEnd);
+  $pendingConnection, 
+  $allConnections, 
+  createConnection, 
+  Connection 
+} from '../state';
+import { log, error } from '../utils/logger';
+
+/**
+ * Initializes the connection drawing system.
+ * Product Purpose: Enables teams to visually link related scenarios.
+ */
+export function setupConnectionSystem() {
+  const workspace = document.getElementById('workspace');
+  if (!workspace) {
+    error('Cannot setup connection system: workspace element not found');
+    return;
   }
+  log('Workspace found for connection system', { id: workspace.id });
   
-  /**
-   * Detects when user starts drawing a connection from a card dot.
-   * Product Flow: User clicks on a dot → connection drawing begins
-   */
-  // src/interactions/connections.ts - in handlePossibleConnectionStart()
+  // Listen for connection initiation (clicking on dots)
+  workspace.addEventListener('pointerdown', handlePossibleConnectionStart, true); // Use capture phase for early intervention
+  
+  // Track mouse movement during connection drawing
+  document.addEventListener('pointermove', handleConnectionDragMove);
+  
+  // Finalize or cancel connection drawing
+  document.addEventListener('pointerup', handleConnectionEnd);
+}
+
+/**
+ * Detects when user starts drawing a connection from a card dot.
+ * Product Flow: User clicks on a dot → connection drawing begins
+ */
 function handlePossibleConnectionStart(event: PointerEvent) {
-    log('handlePossibleConnectionStart - Entry', {
-      target: event.target,
-      targetClass: (event.target as Element)?.className,
-      eventType: event.type,
-      timestamp: Date.now()
+  const dot = (event.target as Element).closest('.connection-dot');
+      
+  if (!dot) {
+    return; 
+  }
+
+  log('Connection dot clicked', { 
+    dotClass: dot.className,
+    attributes: Array.from(dot.attributes).map(a => ({ name: a.name, value: a.value }))
+  });
+  
+  // *** CRITICAL: Prevent card drag and other behaviors immediately ***
+  event.preventDefault(); 
+  event.stopPropagation();
+  log('Connection start: event.preventDefault() and event.stopPropagation() called immediately for dot.');
+
+  const cardIdStr = dot.getAttribute('data-card-id');
+  const sideStr = dot.getAttribute('data-side');
+
+  if (!cardIdStr || !sideStr) {
+    error('handlePossibleConnectionStart - Missing data attributes on dot', { cardIdStr, sideStr });
+    return;
+  }
+
+  const cardId = parseInt(cardIdStr, 10);
+  const side = parseInt(sideStr, 10);
+  
+  if (isNaN(cardId) || isNaN(side)) {
+    error('handlePossibleConnectionStart - Invalid connection data (NaN)', { 
+      cardId, 
+      side,
+      dotAttributes: Array.from(dot.attributes).map(a => `${a.name}="${a.value}"`)
     });
-    
-    const dot = (event.target as Element).closest('.connection-dot');
-    
-    log('Connection dot detection', {
-      dotElement: !!dot,
-      dotClass: dot?.className,
-      dotAttributes: dot ? Object.fromEntries([...dot.attributes].map(a => [a.name, a.value])) : null
-    });
-    
-    if (!dot) {
-      log('handlePossibleConnectionStart - Early exit: No dot found', { 
-        target: event.target 
-      });
-      return;
-    }
-    
-    const cardId = parseInt(dot.getAttribute('data-card-id') || '', 10);
-    const side = parseInt(dot.getAttribute('data-side') || '', 10);
-    
-    log('Connection data extracted', {
-      cardId: cardId,
-      side: side,
-      isValid: !isNaN(cardId) && !isNaN(side)
-    });
-    
-    if (isNaN(cardId) || isNaN(side)) {
-      error('handlePossibleConnectionStart - Invalid connection data', { 
-        cardId, 
-        side,
-        dotAttributes: [...dot.attributes].map(a => `${a.name}="${a.value}"`)
-      });
-      return;
-    }
-    
-    const pendingState = {
-      fromCardId: cardId,
-      fromSide: side,
-      currentX: event.clientX,
-      currentY: event.clientY
-    };
-    
-    log('Setting pending connection state', {
-      oldState: $pendingConnection.get(),
-      newState: pendingState
-    });
-    
-    $pendingConnection.set(pendingState);
-    
-    log('Pending connection state set', {
-      currentValue: $pendingConnection.get(),
-      stateMatches: JSON.stringify($pendingConnection.get()) === JSON.stringify(pendingState)
-    });
-    
-    event.preventDefault();
-    log('Event prevented');
+    return;
   }
   
-  /**
-   * Updates the preview connection line as user moves mouse.
-   * Product Feedback: Shows real-time line from starting point to cursor.
-   */
-  function handleConnectionDragMove(event: PointerEvent) {
-    const pending = $pendingConnection.get();
-    if (!pending) return;
-    
-    // Update the end point of the preview line
-    $pendingConnection.set({
-      ...pending,
-      currentX: event.clientX,
-      currentY: event.clientY
-    });
+  const pendingState = {
+    fromCardId: cardId,
+    fromSide: side,
+    startX: event.clientX, 
+    startY: event.clientY,
+    currentX: event.clientX,
+    currentY: event.clientY
+  };
+  
+  log('Setting pending connection state', {
+    newState: pendingState
+  });
+  
+  $pendingConnection.set(pendingState);
+}
+
+/**
+ * Updates the preview connection line as user moves mouse.
+ * Product Feedback: Shows real-time line from starting point to cursor.
+ */
+function handleConnectionDragMove(event: PointerEvent) {
+  const pending = $pendingConnection.get();
+  if (!pending) return;
+  
+  // Prevent default to avoid text selection during drag
+  event.preventDefault();
+
+  $pendingConnection.set({
+    ...pending,
+    currentX: event.clientX,
+    currentY: event.clientY
+  });
+  // log('Pending connection move', { currentX: event.clientX, currentY: event.clientY }); // Can be very verbose
+}
+
+/**
+ * Completes or cancels connection drawing when mouse released.
+ * Product Logic: If released over another card's dot, create connection.
+ * Otherwise, cancel the operation.
+ */
+function handleConnectionEnd(event: PointerEvent) {
+  const pending = $pendingConnection.get();
+  if (!pending) return;
+  
+  log('handleConnectionEnd - Pending connection exists', { pending });
+  
+  // Clear pending state REGARDLESS of target, so the line disappears
+  $pendingConnection.set(null);
+  log('Pending connection cleared from state');
+  
+  const targetDot = (event.target as Element).closest('.connection-dot');
+  if (!targetDot) {
+    log('handleConnectionEnd - No target dot found on release');
+    return; 
   }
   
-  /**
-   * Completes or cancels connection drawing when mouse released.
-   * Product Logic: If released over another card's dot, create connection.
-   * Otherwise, cancel the operation.
-   */
-  function handleConnectionEnd(event: PointerEvent) {
-    const pending = $pendingConnection.get();
-    if (!pending) return;
-    
-    // Clear pending state
-    $pendingConnection.set(null);
-    
-    // Check if we're over a valid connection target
-    const targetDot = (event.target as Element).closest('.connection-dot');
-    if (!targetDot) return; // Not a valid target
-    
-    const targetCardId = parseInt(targetDot.getAttribute('data-card-id') || '', 10);
-    const targetSide = parseInt(targetDot.getAttribute('data-side') || '', 10);
-    
-    if (isNaN(targetCardId) || isNaN(targetSide)) return;
-    
-    // Don't allow connections to the same card
-    if (targetCardId === pending.fromCardId) return;
-    
-    // Create the new connection
-    createConnection({
-      fromCardId: pending.fromCardId,
-      fromSide: pending.fromSide,
-      fromPosition: 0.5,  // Center of edge
-      toCardId: targetCardId,
-      toSide: targetSide,
-      toPosition: 0.5     // Center of edge
-    });
+  const targetCardIdStr = targetDot.getAttribute('data-card-id');
+  const targetSideStr = targetDot.getAttribute('data-side');
+
+  if (!targetCardIdStr || !targetSideStr) {
+    error('handleConnectionEnd - Missing data attributes on target dot', {targetCardIdStr, targetSideStr});
+    return;
   }
+  const targetCardId = parseInt(targetCardIdStr, 10);
+  const targetSide = parseInt(targetSideStr, 10);
+  
+  if (isNaN(targetCardId) || isNaN(targetSide)) {
+    error('handleConnectionEnd - Invalid target connection data (NaN)', { targetCardId, targetSide });
+    return;
+  }
+  log('Connection end target data', { targetCardId, targetSide });
+  
+  if (targetCardId === pending.fromCardId) {
+    log('handleConnectionEnd - Attempted to connect card to itself. Aborted.');
+    return;
+  }
+  
+  log('Creating final connection in state', { from: pending.fromCardId, to: targetCardId });
+  createConnection({
+    fromCardId: pending.fromCardId,
+    fromSide: pending.fromSide,
+    fromPosition: 0.5,
+    toCardId: targetCardId,
+    toSide: targetSide,
+    toPosition: 0.5 
+  });
+}

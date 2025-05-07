@@ -29,7 +29,7 @@ export function setupDragAndDrop() {
       return;
     }
     
-    log('Workspace found', { id: workspace.id });
+    log('Workspace found for drag-and-drop', { id: workspace.id });
     workspace.addEventListener('pointerdown', handleWorkspaceClick);
   }
   
@@ -40,24 +40,24 @@ export function setupDragAndDrop() {
  */
 function handleWorkspaceClick(event: PointerEvent) {
   const handle = (event.target as Element).closest('[data-drag-handle]');
-  log('Workspace click event', { hasHandle: !!handle });
+  log('Workspace click event for drag', { target: event.target, hasHandle: !!handle });
   
   if (!handle) return;
   
-  const card = handle.closest('.card') as HTMLElement;
-  if (!card) {
+  const cardElement = handle.closest('.card') as HTMLElement; // Renamed to cardElement to avoid conflict
+  if (!cardElement) {
     error('No card element found for handle');
     return;
   }
   
-  const cardId = parseInt(card.dataset.cardId || '', 10);
+  const cardId = parseInt(cardElement.dataset.cardId || '', 10);
   if (isNaN(cardId)) {
-    error('Invalid card ID', { cardId: card.dataset.cardId });
+    error('Invalid card ID for drag', { cardId: cardElement.dataset.cardId });
     return;
   }
   
   log('Card drag initiated', { cardId });
-  startDraggingCard(card, cardId, event);
+  startDraggingCard(cardElement, cardId, event);
 }
 
 /**
@@ -65,22 +65,24 @@ function handleWorkspaceClick(event: PointerEvent) {
  * Product Flow: User grabs handle → card becomes moveable → follows cursor
  */
 function startDraggingCard(element: HTMLElement, cardId: number, event: PointerEvent) {
-    log('Card drag started', { cardId, x: event.clientX, y: event.clientY });
+    log('Card drag started', { cardId, clientX: event.clientX, clientY: event.clientY });
     
+    event.preventDefault(); // Prevent text selection or other default actions
     $activeDraggedCard.set(cardId);
     bringCardToFront(cardId);
     
     const startX = event.clientX;
     const startY = event.clientY;
-    const cards = $allCards.get();
-    const cardData = cards.find(c => c.id === cardId);
+    const currentCards = $allCards.get(); // Get current state of cards
+    const cardData = currentCards.find(c => c.id === cardId);
     
     if (!cardData) {
-      error('Card data not found', { cardId });
+      error('Card data not found for dragging', { cardId });
+      $activeDraggedCard.set(null); // Reset active card if data is missing
       return;
     }
     
-    log('Card initial position', { cardId, x: cardData.x, y: cardData.y });
+    log('Card initial position for drag', { cardId, x: cardData.x, y: cardData.y });
     
     const initialX = cardData.x;
     const initialY = cardData.y;
@@ -91,15 +93,16 @@ function startDraggingCard(element: HTMLElement, cardId: number, event: PointerE
       const newX = initialX + deltaX;
       const newY = initialY + deltaY;
       
-      log('Card position update', { cardId, x: newX, y: newY, deltaX, deltaY });
+      // log('Card position update (drag)', { cardId, x: newX, y: newY, deltaX, deltaY }); // Can be too verbose
       updateCardPosition(cardId, newX, newY);
     }
     
-    function handleRelease() {
-      const finalPosition = cards.find(c => c.id === cardId);
+    function handleRelease(releaseEvent: PointerEvent) {
+      const finalCards = $allCards.get(); // Get latest state
+      const finalPosition = finalCards.find(c => c.id === cardId);
       log('Card drag ended', { 
         cardId, 
-        finalPosition: finalPosition ? { x: finalPosition.x, y: finalPosition.y } : null 
+        finalPosition: finalPosition ? { x: finalPosition.x, y: finalPosition.y } : 'not found' 
       });
       
       document.removeEventListener('pointermove', handleMove);
@@ -107,4 +110,8 @@ function startDraggingCard(element: HTMLElement, cardId: number, event: PointerE
       
       $activeDraggedCard.set(null);
     }
+
+    // ******** FIX: ADD THE EVENT LISTENERS ********
+    document.addEventListener('pointermove', handleMove);
+    document.addEventListener('pointerup', handleRelease);
   }
